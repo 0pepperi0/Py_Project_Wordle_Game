@@ -1,26 +1,31 @@
 import pathlib
 import random
 from string import ascii_letters
+from rich.console import Console
+from rich.theme import Theme
 
-WORDLIST = pathlib.Path("word_list.txt")
-
-
+console = Console(width=40, theme=Theme({"warning": "red on yellow"}))
 
 def main():
+
     word = get_random_word()
 
-    for guess_num in range(1, 7):
-        guess = input(f"\nGuess {guess_num} a word: ").upper()
-        demostrate_guess(guess, word)
-        if guess == "word":
-            print("Correct")
+    guesses = ["_" * 5] * 6
+
+    for indx in range(6):
+        refresh_page(headline=f"Guess {indx + 1}")
+
+        demonstrate_guesses(guesses, word)
+        guesses[indx] = input(f"\nGuess {indx + 1}: ").upper()
+        if guesses[indx] == word:
             break
+
     else:
         finish_game(word)
 
 
 def get_random_word():
-    wordlist = pathlib.Path(__file__).parent
+    wordlist = pathlib.Path("word_list.txt")
     words = list(
         word.upper()
         for word in wordlist.read_text(encoding="utf-8").split("\n")
@@ -34,16 +39,24 @@ def finish_game(word):
     print(f"The word was {word}")
 
 
-def demostrate_guess(guess, word):
-    correct_letters = {
-        letter for letter, correct in zip(guess, word) if letter == correct
-    }
-    mispaced_letters = set(word) & set(guess) - correct_letters
-    wrong_letters = set(guess) - set(word)
+def demonstrate_guesses(guesses, word):
+    for guess in guesses:
+        styled_guess = []
+        for letter, correct in zip(guess, word):
+            if letter == correct:
+                style = "bold white on green"
+            elif letter in word:
+                style = "bold white on yellow"
+            elif letter in ascii_letters:
+                style = "white on #666666"
+            else:
+                style = "dim"
+            styled_guess.append(f"[{style}]{letter}[/]")
 
-    print("Correct: ", ", ".join(sorted(correct_letters)))
-    print("Misplaced: ", ", ".join(sorted(mispaced_letters)))
-    print("Wrong: ", ", ".join(sorted(wrong_letters)), "\n")
+        console.print("".join(styled_guess), justify="center")
+def refresh_page(headline):
+    console.clear()
+    console.rule(f"[bold blue]:leafy_green: {headline} :leafy_green:[/]\n")
 
 
 if __name__ == "__main__":
